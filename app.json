@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "Campus Eats",
+    "slug": "campus-eats",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "campuseats",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#FFF7ED",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.campuseats.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#FFF7ED"
+      },
+      "package": "com.campuseats.app",
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#FFF7ED",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "e9ceba9c-10fe-438a-85bb-e9efad97b5bb"
+      }
+    }
+  }
+}
