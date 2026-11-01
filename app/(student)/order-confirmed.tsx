@@ -10,7 +10,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { formatINR } from '../../context/cart';
+import { formatINR } from '../../lib/format';
 import {
   Colors,
   FontFamily,

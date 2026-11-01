@@ -14,7 +14,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../../lib/supabase';
 import { Database } from '../../../lib/database.types';
-import { useCart, formatINR } from '../../../context/cart';
+import { useCart } from '../../../context/cart';
+import { formatINR } from '../../../lib/format';
 import {
   Colors,
   FontFamily,

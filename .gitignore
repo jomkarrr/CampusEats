@@ -41,5 +41,4 @@ yarn-error.*
 /android
 
 .claude/
-context/
 
