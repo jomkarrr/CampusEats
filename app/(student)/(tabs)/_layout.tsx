@@ -4,7 +4,10 @@ import { View, Platform, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, FontFamily, Shadows } from '../../../constants/theme';
 
-export default function StudentLayout() {
+// Main student tabs ONLY. Flow screens (outlet / item / cart / checkout /
+// order detail / outlet mode) live one level up in the (student) Stack —
+// see app/(student)/_layout.tsx.
+export default function StudentTabsLayout() {
   return (
     <Tabs
       screenOptions={{
@@ -77,55 +80,6 @@ export default function StudentLayout() {
               {focused && <View style={styles.activeDot} />}
             </View>
           ),
-        }}
-      />
-      <Tabs.Screen
-        name="outlet/[id]"
-        options={{
-          href: null,
-          tabBarStyle: { display: 'none' },
-        }}
-      />
-      <Tabs.Screen
-        name="cart"
-        options={{
-          href: null,
-          tabBarStyle: { display: 'none' },
-        }}
-      />
-      <Tabs.Screen
-        name="checkout"
-        options={{
-          href: null,
-          tabBarStyle: { display: 'none' },
-        }}
-      />
-      <Tabs.Screen
-        name="order-confirmed"
-        options={{
-          href: null,
-          tabBarStyle: { display: 'none' },
-        }}
-      />
-      <Tabs.Screen
-        name="orders/[id]"
-        options={{
-          href: null,
-          tabBarStyle: { display: 'none' },
-        }}
-      />
-      <Tabs.Screen
-        name="item/[id]"
-        options={{
-          href: null,
-          tabBarStyle: { display: 'none' },
-        }}
-      />
-      <Tabs.Screen
-        name="outlet-orders"
-        options={{
-          href: null,
-          tabBarStyle: { display: 'none' },
         }}
       />
     </Tabs>
