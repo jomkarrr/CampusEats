@@ -42,6 +42,7 @@ export default function OutletDetailScreen() {
 
   useEffect(() => {
     if (!id) return;
+    const cleanId = Array.isArray(id) ? id[0] : id;
 
     const fetchOutletAndMenu = async () => {
       try {
@@ -50,17 +51,18 @@ export default function OutletDetailScreen() {
         const { data: outletData, error: outletErr } = await supabase
           .from('outlets')
           .select('*')
-          .eq('id', id)
-          .single();
+          .eq('id', cleanId)
+          .maybeSingle();
 
         if (outletErr) throw outletErr;
+        if (!outletData) throw new Error('Outlet not found');
         setOutlet(outletData);
 
         // Fetch menu items for this outlet
         const { data: itemsData, error: itemsErr } = await supabase
           .from('menu_items')
           .select('*')
-          .eq('outlet_id', id)
+          .eq('outlet_id', cleanId)
           .order('name');
 
         if (itemsErr) throw itemsErr;

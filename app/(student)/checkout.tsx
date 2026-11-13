@@ -48,12 +48,12 @@ export default function CheckoutScreen() {
     initialFulfillment === 'pickup' ? 'pickup' : 'delivery'
   );
   const [selectedSlot, setSelectedSlot] = useState<string>(SLOTS[4]);
-  const [selectedPayment, setSelectedPayment] = useState<'upi' | 'card' | 'wallet'>('upi');
+  const [selectedPayment, setSelectedPayment] = useState<'upi' | 'cash'>('upi');
 
   // Contact / Address form fields
   const [fullName, setFullName] = useState(profile?.full_name ?? '');
   const [phone, setPhone] = useState(profile?.phone ?? '');
-  const [hostelBlock, setHostelBlock] = useState('Hostel MH1, Room 304');
+  const [hostelBlock, setHostelBlock] = useState(profile?.hostel_block ?? '');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -65,6 +65,9 @@ export default function CheckoutScreen() {
     }
     if (profile?.phone && !phone) {
       setPhone(profile.phone);
+    }
+    if (profile?.hostel_block && !hostelBlock) {
+      setHostelBlock(profile.hostel_block);
     }
   }, [profile]);
 
@@ -106,6 +109,8 @@ export default function CheckoutScreen() {
           status: 'placed',
           fulfillment,
           total,
+          payment_method: selectedPayment,
+          payment_status: 'pending',
         })
         .select()
         .single();
@@ -158,6 +163,7 @@ export default function CheckoutScreen() {
           slot: selectedSlot,
           outletName: outletName ?? 'Food Street Stall',
           address: hostelBlock,
+          paymentMethod: selectedPayment,
         },
       });
     } catch (err: unknown) {
@@ -355,15 +361,15 @@ export default function CheckoutScreen() {
           </View>
         </View>
 
-        {/* Step 3: Payment Method (UPI Mock) */}
+        {/* Step 3: Payment Section */}
         <View style={[styles.card, Shadows.card]}>
           <View style={styles.stepHeader}>
             <View style={styles.stepNumCircle}>
               <Text style={styles.stepNum}>3</Text>
             </View>
             <View>
-              <Text style={styles.stepTitle}>Payment Method</Text>
-              <Text style={styles.stepSub}>Prepaid orders only</Text>
+              <Text style={styles.stepTitle}>Payment</Text>
+              <Text style={styles.stepSub}>Pay via UPI / Cash at pickup or delivery</Text>
             </View>
           </View>
 
@@ -386,39 +392,39 @@ export default function CheckoutScreen() {
                 {selectedPayment === 'upi' && <View style={styles.radioDot} />}
               </View>
               <View style={styles.paymentIconBox}>
-                <Ionicons name="flash" size={18} color="#D97706" />
+                <Ionicons name="qr-code-outline" size={18} color="#D97706" />
               </View>
-              <View>
-                <Text style={styles.paymentName}>UPI (Google Pay, PhonePe, Paytm)</Text>
-                <Text style={styles.paymentSub}>Instant zero-fee payment</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.paymentName}>UPI at Pickup / Delivery</Text>
+                <Text style={styles.paymentSub}>Google Pay, PhonePe, Paytm, QR scan</Text>
               </View>
             </View>
           </TouchableOpacity>
 
-          {/* Card Option */}
+          {/* Cash Option */}
           <TouchableOpacity
             style={[
               styles.paymentOption,
-              selectedPayment === 'card' && styles.paymentOptionActive,
+              selectedPayment === 'cash' && styles.paymentOptionActive,
             ]}
-            onPress={() => setSelectedPayment('card')}
+            onPress={() => setSelectedPayment('cash')}
             activeOpacity={0.85}
           >
             <View style={styles.paymentLeft}>
               <View
                 style={[
                   styles.paymentRadio,
-                  selectedPayment === 'card' && styles.paymentRadioActive,
+                  selectedPayment === 'cash' && styles.paymentRadioActive,
                 ]}
               >
-                {selectedPayment === 'card' && <View style={styles.radioDot} />}
+                {selectedPayment === 'cash' && <View style={styles.radioDot} />}
               </View>
-              <View style={[styles.paymentIconBox, { backgroundColor: '#1E293B' }]}>
-                <Ionicons name="card" size={16} color="#FFFFFF" />
+              <View style={[styles.paymentIconBox, { backgroundColor: '#10B981' }]}>
+                <Ionicons name="cash-outline" size={18} color="#FFFFFF" />
               </View>
-              <View>
-                <Text style={styles.paymentName}>Debit / Credit Card</Text>
-                <Text style={styles.paymentSub}>Visa, Mastercard, RuPay</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.paymentName}>Cash at Pickup / Delivery</Text>
+                <Text style={styles.paymentSub}>Pay directly with cash when you receive food</Text>
               </View>
             </View>
           </TouchableOpacity>

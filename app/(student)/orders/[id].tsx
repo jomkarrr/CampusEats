@@ -28,6 +28,8 @@ interface OrderDetail {
   status: OrderStatus;
   fulfillment: FulfillmentType;
   total: number;
+  payment_method: string | null;
+  payment_status: string | null;
   created_at: string;
   outlet_id: string;
   outlet: {
@@ -504,6 +506,14 @@ export default function OrderDetailScreen() {
             <Text style={styles.billTotalLabel}>Grand Total</Text>
             <Text style={styles.billTotalVal}>{formatINR(order.total)}</Text>
           </View>
+
+          {/* Payment Notice */}
+          <View style={styles.honestPaymentBanner}>
+            <Ionicons name="card-outline" size={18} color={Colors.primary} />
+            <Text style={styles.honestPaymentText}>
+              Payment: {formatINR(order.total)} — pay on {order.fulfillment === 'pickup' ? 'pickup' : 'delivery'} ({(order.payment_method ?? 'UPI/Cash').toUpperCase()})
+            </Text>
+          </View>
         </View>
       </ScrollView>
 
@@ -912,6 +922,23 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.extraBold,
     fontSize: 16,
     color: Colors.primary,
+  },
+  honestPaymentBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+    borderRadius: Radii.md,
+    padding: Spacing.sm,
+    marginTop: Spacing.md,
+  },
+  honestPaymentText: {
+    flex: 1,
+    fontFamily: FontFamily.semiBold,
+    fontSize: 12,
+    color: '#9A3412',
   },
   footerWrap: {
     backgroundColor: '#FFFFFF',

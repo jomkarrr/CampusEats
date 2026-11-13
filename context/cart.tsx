@@ -19,6 +19,7 @@ export interface CartContextValue {
   subtotal: number;
   addItem: (item: MenuItemRow, outletId: string, outletName?: string) => void;
   removeItem: (menuItemId: string) => void;
+  removeLine: (menuItemId: string) => void;
   setQty: (menuItemId: string, qty: number) => void;
   getItemQty: (menuItemId: string) => number;
   clearCart: () => void;
@@ -95,6 +96,17 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const removeLine = (menuItemId: string) => {
+    setItems((prev) => {
+      const remaining = prev.filter((i) => i.menuItem.id !== menuItemId);
+      if (remaining.length === 0) {
+        setOutletId(null);
+        setOutletName(null);
+      }
+      return remaining;
+    });
+  };
+
   const setQty = (menuItemId: string, qty: number) => {
     if (qty <= 0) {
       setItems((prev) => {
@@ -135,6 +147,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         subtotal,
         addItem,
         removeItem,
+        removeLine,
         setQty,
         getItemQty,
         clearCart,

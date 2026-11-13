@@ -12,6 +12,7 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
@@ -24,6 +25,7 @@ import {
 } from '../../constants/theme';
 
 export default function ProfileScreen() {
+  const router = useRouter();
   const { user, profile, signOut, refreshProfile } = useAuth();
 
   const [fullName, setFullName] = useState(profile?.full_name ?? '');
@@ -236,6 +238,29 @@ export default function ProfileScreen() {
               </TouchableOpacity>
             )}
           </View>
+
+          {/* Outlet Mode Card */}
+          <TouchableOpacity
+            style={[styles.outletModeCard, Shadows.card]}
+            onPress={() => router.push('/(student)/outlet-orders' as any)}
+            activeOpacity={0.88}
+          >
+            <View style={styles.outletModeIconWrap}>
+              <Ionicons name="storefront" size={24} color="#FFFFFF" />
+            </View>
+            <View style={styles.outletModeTextWrap}>
+              <View style={styles.outletModeTitleRow}>
+                <Text style={styles.outletModeTitle}>Outlet Mode</Text>
+                <View style={styles.outletModeBadge}>
+                  <Text style={styles.outletModeBadgeText}>Stall Kitchen</Text>
+                </View>
+              </View>
+              <Text style={styles.outletModeDesc}>
+                Manage orders: Accept, Prepare & Mark Ready for pickup or delivery.
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={20} color={Colors.textTertiary} />
+          </TouchableOpacity>
 
           {/* App Info Card */}
           <View style={[styles.card, Shadows.card]}>
@@ -462,6 +487,56 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.semiBold,
     fontSize: 13,
     color: Colors.text,
+  },
+  outletModeCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radii.xl,
+    padding: Spacing.md,
+    borderWidth: 1.5,
+    borderColor: '#FED7AA',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    marginBottom: Spacing.xs,
+  },
+  outletModeIconWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: Radii.lg,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  outletModeTextWrap: {
+    flex: 1,
+  },
+  outletModeTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 2,
+  },
+  outletModeTitle: {
+    fontFamily: FontFamily.bold,
+    fontSize: 15,
+    color: Colors.text,
+  },
+  outletModeBadge: {
+    backgroundColor: Colors.primaryLight,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: Radii.pill,
+  },
+  outletModeBadgeText: {
+    fontFamily: FontFamily.bold,
+    fontSize: 10,
+    color: Colors.primary,
+  },
+  outletModeDesc: {
+    fontFamily: FontFamily.regular,
+    fontSize: 12,
+    color: Colors.textSecondary,
+    lineHeight: 16,
   },
   signOutBtn: {
     flexDirection: 'row',

@@ -10,34 +10,19 @@ import {
   PlusJakartaSans_800ExtraBold,
 } from '@expo-google-fonts/plus-jakarta-sans';
 import * as SplashScreen from 'expo-splash-screen';
-import { useAuth } from '../hooks/useAuth';
+import { AuthProvider, useAuth } from '../hooks/useAuth';
 import { CartProvider } from '../context/cart';
 
 SplashScreen.preventAutoHideAsync();
 
-export default function RootLayout() {
-  const [fontsLoaded, fontError] = useFonts({
-    PlusJakartaSans_400Regular,
-    PlusJakartaSans_500Medium,
-    PlusJakartaSans_600SemiBold,
-    PlusJakartaSans_700Bold,
-    PlusJakartaSans_800ExtraBold,
-  });
-
+function RootNavigation() {
   const { session, profile, loading } = useAuth();
   const router = useRouter();
   const segments = useSegments();
 
-  // Hide splash when fonts are loaded or errored
-  useEffect(() => {
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontError]);
-
   // Auth guard — redirect based on session + role
   useEffect(() => {
-    if (loading || (!fontsLoaded && !fontError)) return;
+    if (loading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
     const inStudentGroup = segments[0] === '(student)';
@@ -53,7 +38,9 @@ export default function RootLayout() {
 
     // Signed in but no role yet → choose-purpose
     if (!profile?.role) {
-      router.replace('/(auth)/choose-purpose');
+      if (segments[1] !== 'choose-purpose') {
+        router.replace('/(auth)/choose-purpose');
+      }
       return;
     }
 
@@ -63,18 +50,43 @@ export default function RootLayout() {
     } else if (profile.role === 'delivery_partner' && !inPartnerGroup) {
       router.replace('/(partner)/index');
     }
-  }, [session, profile, loading, fontsLoaded, fontError, segments]);
-
-  if (!fontsLoaded && !fontError) return null;
+  }, [session, profile, loading, segments, router]);
 
   return (
-    <CartProvider>
+    <>
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(student)" />
         <Stack.Screen name="(partner)" />
       </Stack>
-    </CartProvider>
+    </>
+  );
+}
+
+export default function RootLayout() {
+  const [fontsLoaded, fontError] = useFonts({
+    PlusJakartaSans_400Regular,
+    PlusJakartaSans_500Medium,
+    PlusJakartaSans_600SemiBold,
+    PlusJakartaSans_700Bold,
+    PlusJakartaSans_800ExtraBold,
+  });
+
+  // Hide splash when fonts are loaded or errored
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) return null;
+
+  return (
+    <AuthProvider>
+      <CartProvider>
+        <RootNavigation />
+      </CartProvider>
+    </AuthProvider>
   );
 }

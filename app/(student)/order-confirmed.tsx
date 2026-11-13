@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { supabase } from '../../lib/supabase';
+import { Database } from '../../lib/database.types';
 import { formatINR } from '../../lib/format';
 import {
   Colors,
@@ -18,6 +20,8 @@ import {
   Spacing,
   Shadows,
 } from '../../constants/theme';
+
+type OrderRow = Database['public']['Tables']['orders']['Row'];
 
 export default function OrderConfirmedScreen() {
   const router = useRouter();
@@ -28,6 +32,7 @@ export default function OrderConfirmedScreen() {
     slot,
     outletName,
     address,
+    paymentMethod,
   } = useLocalSearchParams<{
     orderId?: string;
     total?: string;
@@ -35,20 +40,38 @@ export default function OrderConfirmedScreen() {
     slot?: string;
     outletName?: string;
     address?: string;
+    paymentMethod?: string;
   }>();
 
-  const total = totalStr ? parseFloat(totalStr) : 0;
-  const isPickup = fulfillment === 'pickup';
+  const [order, setOrder] = useState<OrderRow | null>(null);
+
+  useEffect(() => {
+    if (!orderId) return;
+    const fetchOrder = async () => {
+      const { data } = await supabase
+        .from('orders')
+        .select('*')
+        .eq('id', orderId)
+        .maybeSingle();
+      if (data) setOrder(data);
+    };
+    fetchOrder();
+  }, [orderId]);
+
+  const total = totalStr ? parseFloat(totalStr) : (order?.total ?? 0);
+  const isPickup = (order?.fulfillment ?? fulfillment) === 'pickup';
 
   // Format short order ID
   const displayOrderId = orderId
     ? `CE-${orderId.slice(0, 8).toUpperCase()}`
     : 'CE-ORD1024';
 
-  const placedTime = new Date().toLocaleTimeString('en-IN', {
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const placedTime = order?.created_at
+    ? new Date(order.created_at).toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : 'Just now';
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
@@ -212,22 +235,34 @@ export default function OrderConfirmedScreen() {
           </View>
         </View>
 
-        {/* Billing Overview */}
+        {/* Payment Details */}
         <View style={[styles.card, Shadows.card]}>
           <Text style={styles.cardTitle}>Payment Details</Text>
+
+          <View style={styles.paymentNoteBox}>
+            <Ionicons name="card-outline" size={18} color={Colors.primary} />
+            <Text style={styles.paymentNoteText}>
+              Payment: {formatINR(total)} — pay on {isPickup ? 'pickup' : 'delivery'} ({(order?.payment_method ?? paymentMethod ?? 'UPI/Cash').toUpperCase()})
+            </Text>
+          </View>
+
           <View style={styles.billRow}>
             <Text style={styles.billLabel}>Payment Mode</Text>
-            <Text style={styles.billValue}>UPI (Paid Online)</Text>
+            <Text style={styles.billValue}>
+              {(order?.payment_method ?? paymentMethod) === 'cash'
+                ? 'Cash on Delivery / Pickup'
+                : 'UPI (Pay on Pickup/Delivery)'}
+            </Text>
           </View>
           <View style={styles.billRow}>
             <Text style={styles.billLabel}>Status</Text>
-            <Text style={[styles.billValue, { color: '#166534' }]}>
-              Payment Confirmed
+            <Text style={[styles.billValue, { color: '#D97706' }]}>
+              Pay upon receipt
             </Text>
           </View>
           <View style={styles.divider} />
           <View style={styles.billTotalRow}>
-            <Text style={styles.billTotalLabel}>Total Paid</Text>
+            <Text style={styles.billTotalLabel}>Total Payable</Text>
             <Text style={styles.billTotalValue}>{formatINR(total)}</Text>
           </View>
         </View>
@@ -554,6 +589,23 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.extraBold,
     fontSize: 18,
     color: Colors.primary,
+  },
+  paymentNoteBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#FFF7ED',
+    borderWidth: 1,
+    borderColor: '#FED7AA',
+    borderRadius: Radii.md,
+    padding: Spacing.sm,
+    marginBottom: Spacing.md,
+  },
+  paymentNoteText: {
+    flex: 1,
+    fontFamily: FontFamily.semiBold,
+    fontSize: 12,
+    color: '#9A3412',
   },
   footerWrap: {
     backgroundColor: '#FFFFFF',

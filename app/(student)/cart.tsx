@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../../context/cart';
+import { useAuth } from '../../hooks/useAuth';
 import { formatINR } from '../../lib/format';
 import {
   Colors,
@@ -24,7 +25,8 @@ import {
 
 export default function CartScreen() {
   const router = useRouter();
-  const { items, outletName, subtotal, itemCount, addItem, removeItem, clearCart } =
+  const { profile } = useAuth();
+  const { items, outletName, subtotal, itemCount, addItem, removeItem, removeLine, clearCart } =
     useCart();
 
   const [fulfillment, setFulfillment] = useState<'pickup' | 'delivery'>('delivery');
@@ -174,7 +176,7 @@ export default function CartScreen() {
                   </View>
 
                   <TouchableOpacity
-                    onPress={() => removeItem(item.menuItem.id)}
+                    onPress={() => removeLine(item.menuItem.id)}
                     style={styles.deleteBtn}
                   >
                     <Ionicons name="trash-outline" size={16} color={Colors.textTertiary} />
@@ -262,7 +264,10 @@ export default function CartScreen() {
             <View style={styles.destinationHintRow}>
               <Ionicons name="business-outline" size={16} color={Colors.primary} />
               <Text style={styles.destinationHintText}>
-                Deliver to: <Text style={styles.destinationBold}>Hostel MH1 / Block B</Text>
+                Deliver to:{' '}
+                <Text style={styles.destinationBold}>
+                  {profile?.hostel_block ? profile.hostel_block : 'Your Hostel Block'}
+                </Text>
               </Text>
             </View>
           )}

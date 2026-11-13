@@ -21,7 +21,7 @@ export interface Database {
       profiles: {
         Row: {
           id: string;
-          role: UserRole;
+          role: UserRole | null;
           full_name: string | null;
           phone: string | null;
           hostel_block: string | null;
@@ -29,7 +29,7 @@ export interface Database {
         };
         Insert: {
           id: string;
-          role: UserRole;
+          role?: UserRole | null;
           full_name?: string | null;
           phone?: string | null;
           hostel_block?: string | null;
@@ -37,7 +37,7 @@ export interface Database {
         };
         Update: {
           id?: string;
-          role?: UserRole;
+          role?: UserRole | null;
           full_name?: string | null;
           phone?: string | null;
           hostel_block?: string | null;
@@ -107,6 +107,8 @@ export interface Database {
           status: OrderStatus;
           fulfillment: FulfillmentType;
           total: number;
+          payment_status: string | null;
+          payment_method: string | null;
           created_at: string;
         };
         Insert: {
@@ -116,6 +118,8 @@ export interface Database {
           status?: OrderStatus;
           fulfillment: FulfillmentType;
           total: number;
+          payment_status?: string | null;
+          payment_method?: string | null;
           created_at?: string;
         };
         Update: Partial<Database['public']['Tables']['orders']['Insert']>;
