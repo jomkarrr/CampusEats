@@ -35,8 +35,9 @@ export default function LoginScreen() {
     setLoading(false);
     if (authError) {
       setError(authError.message);
+    } else {
+      router.replace('/');
     }
-    // Navigation handled by root layout auth guard
   };
 
   return (

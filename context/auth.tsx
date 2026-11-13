@@ -58,29 +58,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let isMounted = true;
 
     // Get initial session from AsyncStorage via Supabase
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
+    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
       if (!isMounted) return;
       setSession(s);
       if (s?.user) {
-        fetchProfile(s.user.id).finally(() => {
-          if (isMounted) setLoading(false);
-        });
-      } else {
-        setLoading(false);
+        await fetchProfile(s.user.id);
       }
+      if (isMounted) setLoading(false);
     });
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, s) => {
+      async (event, s) => {
         if (!isMounted) return;
         setSession(s);
         if (s?.user) {
-          fetchProfile(s.user.id);
+          await fetchProfile(s.user.id);
         } else {
           setProfile(null);
-          setLoading(false);
         }
+        if (isMounted) setLoading(false);
       }
     );
 
@@ -91,15 +88,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [fetchProfile]);
 
   const signIn = async (email: string, password: string) => {
+    setLoading(true);
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (!error && data.user) {
       setSession(data.session);
       await fetchProfile(data.user.id);
     }
+    setLoading(false);
     return { error };
   };
 
   const signUp = async ({ email, password, fullName }: SignUpParams) => {
+    setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -110,13 +110,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(data.session);
       await fetchProfile(data.user.id);
     }
+    setLoading(false);
     return { error };
   };
 
   const signOut = async () => {
+    setLoading(true);
     await supabase.auth.signOut();
     setSession(null);
     setProfile(null);
+    setLoading(false);
   };
 
   const saveRole = async (role: UserRole): Promise<{ error: Error | null }> => {
@@ -166,3 +169,4 @@ export function useAuth(): AuthContextValue {
   }
   return ctx;
 }
+

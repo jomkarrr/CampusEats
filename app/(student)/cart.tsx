@@ -301,11 +301,11 @@ export default function CartScreen() {
             <Text style={styles.billTotalValue}>{formatINR(total)}</Text>
           </View>
 
-          {/* Prepaid Notice Pill */}
+          {/* Payment Notice Pill */}
           <View style={styles.prepaidNotice}>
             <Ionicons name="information-circle" size={16} color={Colors.primary} />
             <Text style={styles.prepaidText}>
-              Prepaid orders only via UPI / Cards.
+              Pay on Pickup or Delivery via UPI or Cash.
             </Text>
           </View>
         </View>

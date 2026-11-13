@@ -72,6 +72,30 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleResetRole = () => {
+    Alert.alert(
+      'Reset Role (Demo)',
+      'This will set your role to NULL in the database and sign you out. When you log in next, you will be taken to the Choose Purpose screen to pick between Student and Delivery Partner.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset & Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            if (!user) return;
+            try {
+              await supabase.from('profiles').update({ role: null }).eq('id', user.id);
+              await signOut();
+            } catch (err: unknown) {
+              const msg = err instanceof Error ? err.message : 'Failed to reset role';
+              Alert.alert('Error', msg);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const handleSignOut = () => {
     Alert.alert(
       'Sign Out',
@@ -280,6 +304,16 @@ export default function ProfileScreen() {
               <Text style={styles.infoValue}>VIT-AP Amaravati</Text>
             </View>
           </View>
+
+          {/* Reset Role (Demo) Button */}
+          <TouchableOpacity
+            style={styles.resetRoleBtn}
+            onPress={handleResetRole}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="refresh-circle-outline" size={20} color={Colors.primary} />
+            <Text style={styles.resetRoleText}>Reset Role (Demo)</Text>
+          </TouchableOpacity>
 
           {/* Sign Out Button */}
           <TouchableOpacity
@@ -537,6 +571,23 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textSecondary,
     lineHeight: 16,
+  },
+  resetRoleBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.sm,
+    backgroundColor: '#FFF7ED',
+    height: 50,
+    borderRadius: Radii.pill,
+    borderWidth: 1.5,
+    borderColor: '#FED7AA',
+    marginTop: Spacing.sm,
+  },
+  resetRoleText: {
+    fontFamily: FontFamily.bold,
+    fontSize: 15,
+    color: Colors.primary,
   },
   signOutBtn: {
     flexDirection: 'row',

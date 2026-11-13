@@ -32,3 +32,4 @@ FROM pg_tables
 WHERE schemaname = 'public'
   AND tablename IN ('profiles', 'outlets', 'menu_items', 'orders', 'order_items', 'deliveries')
 ORDER BY tablename;
+

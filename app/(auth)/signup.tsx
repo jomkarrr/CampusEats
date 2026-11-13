@@ -50,7 +50,7 @@ export default function SignupScreen() {
     if (authError) {
       setError(authError.message);
     } else {
-      router.push('/(auth)/verify-email');
+      router.replace('/');
     }
   };
 

@@ -270,3 +270,4 @@ CREATE POLICY "order_items: delete own placed order"
       WHERE o.id = order_items.order_id AND o.customer_id = auth.uid() AND o.status = 'placed'
     )
   );
+

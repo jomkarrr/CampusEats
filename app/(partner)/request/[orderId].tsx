@@ -184,7 +184,7 @@ export default function RequestDetailScreen() {
         Alert.alert(
           'Already Accepted',
           'Another delivery partner just accepted this order.',
-          [{ text: 'Back to Requests', onPress: () => router.replace('/(partner)/index') }]
+          [{ text: 'Back to Requests', onPress: () => router.replace('/(partner)/index' as any) }]
         );
         return;
       }
@@ -206,7 +206,7 @@ export default function RequestDetailScreen() {
           Alert.alert(
             'Already Taken',
             'Another delivery partner accepted this order first.',
-            [{ text: 'OK', onPress: () => router.replace('/(partner)/index') }]
+            [{ text: 'OK', onPress: () => router.replace('/(partner)/index' as any) }]
           );
           return;
         }

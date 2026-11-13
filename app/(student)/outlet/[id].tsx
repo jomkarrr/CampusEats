@@ -280,7 +280,12 @@ export default function OutletDetailScreen() {
               filteredItems.map((item) => {
                 const qty = getItemQty(item.id);
                 return (
-                  <View key={item.id} style={styles.foodCell}>
+                  <TouchableOpacity
+                    key={item.id}
+                    style={styles.foodCell}
+                    activeOpacity={0.88}
+                    onPress={() => router.push(`/(student)/item/${item.id}` as any)}
+                  >
                     {/* Left: Title, Price, Description, Veg Tag */}
                     <View style={styles.foodInfo}>
                       <View style={styles.foodTitleRow}>
@@ -379,7 +384,7 @@ export default function OutletDetailScreen() {
                         </View>
                       )}
                     </View>
-                  </View>
+                  </TouchableOpacity>
                 );
               })
             )}

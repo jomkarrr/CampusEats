@@ -291,7 +291,7 @@ export default function PartnerActiveScreen() {
             style={styles.doneBtn}
             onPress={() => {
               setDeliveredSuccess(false);
-              router.replace('/(partner)/index');
+              router.replace('/(partner)/index' as any);
             }}
             activeOpacity={0.88}
           >
@@ -328,7 +328,7 @@ export default function PartnerActiveScreen() {
             </Text>
             <TouchableOpacity
               style={styles.findOrdersBtn}
-              onPress={() => router.replace('/(partner)/index')}
+              onPress={() => router.replace('/(partner)/index' as any)}
               activeOpacity={0.85}
             >
               <Text style={styles.findOrdersBtnText}>Find Available Orders</Text>

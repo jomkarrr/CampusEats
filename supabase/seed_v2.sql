@@ -636,3 +636,4 @@ ON CONFLICT (id) DO UPDATE SET
   category = EXCLUDED.category,
   is_veg = EXCLUDED.is_veg,
   is_available = EXCLUDED.is_available;
+

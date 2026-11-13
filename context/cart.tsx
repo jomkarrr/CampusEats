@@ -18,6 +18,13 @@ export interface CartContextValue {
   itemCount: number;
   subtotal: number;
   addItem: (item: MenuItemRow, outletId: string, outletName?: string) => void;
+  addItemQty: (
+    item: MenuItemRow,
+    outletId: string,
+    outletName?: string,
+    qty?: number,
+    onSuccess?: () => void
+  ) => boolean;
   removeItem: (menuItemId: string) => void;
   removeLine: (menuItemId: string) => void;
   setQty: (menuItemId: string, qty: number) => void;
@@ -76,6 +83,49 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     });
     setOutletId(newOutletId);
     if (newOutletName) setOutletName(newOutletName);
+  };
+
+  const addItemQty = (
+    item: MenuItemRow,
+    newOutletId: string,
+    newOutletName: string | undefined,
+    qty = 1,
+    onSuccess?: () => void
+  ): boolean => {
+    if (items.length > 0 && outletId && outletId !== newOutletId) {
+      Alert.alert(
+        'Start new cart?',
+        `Your cart already has items from ${outletName ?? 'another outlet'}. Reset cart to add items from ${newOutletName ?? 'this outlet'}?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Reset & Add',
+            style: 'destructive',
+            onPress: () => {
+              setItems([{ menuItem: item, qty, outletId: newOutletId, outletName: newOutletName }]);
+              setOutletId(newOutletId);
+              setOutletName(newOutletName ?? null);
+              if (onSuccess) onSuccess();
+            },
+          },
+        ]
+      );
+      return false;
+    }
+
+    setItems((prev) => {
+      const existing = prev.find((i) => i.menuItem.id === item.id);
+      if (existing) {
+        return prev.map((i) =>
+          i.menuItem.id === item.id ? { ...i, qty: i.qty + qty } : i
+        );
+      }
+      return [...prev, { menuItem: item, qty, outletId: newOutletId, outletName: newOutletName }];
+    });
+    setOutletId(newOutletId);
+    if (newOutletName) setOutletName(newOutletName);
+    if (onSuccess) onSuccess();
+    return true;
   };
 
   const removeItem = (menuItemId: string) => {
@@ -146,6 +196,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         itemCount,
         subtotal,
         addItem,
+        addItemQty,
         removeItem,
         removeLine,
         setQty,
