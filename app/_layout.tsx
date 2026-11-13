@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -24,33 +24,41 @@ function RootNavigation() {
   const rootNavigationState = useRootNavigationState();
 
   const userId = session?.user?.id ?? null;
-  const role = profile?.role ?? null;
+  const role = (profile?.role ?? null) as string | null;
   const group = segments[0] as string | undefined;
   const subRoute = segments[1] as string | undefined;
   const navReady = !!rootNavigationState?.key;
 
-  // Auth guard — redirect ONLY on a route-group mismatch, and only once the
-  // profile AND the navigation state have fully settled. Depends on primitive
-  // values (userId / role / group), not object identities, so unrelated
-  // auth/profile object churn can never re-fire a redirect mid-navigation.
+  // Placement latch: the guard places a signed-in user into their role's
+  // area ONCE per (user, role) pair — after that it never touches
+  // navigation again. In-app navigation (outlet / item / cart / checkout)
+  // must not be interrupted by the auth guard; earlier versions re-ran a
+  // root-level replace on state churn, which remounted the whole student
+  // navigator and bounced the user back to Explore ("Loading campus
+  // outlets..." loop). The latch re-arms only when the user signs out or
+  // their role actually changes (choose-purpose / reset-role flows).
+  const placedForRef = useRef<string | null>(null);
+
   useEffect(() => {
     if (loading) return;
     if (!navReady) return;
-    if (!group) return; // segments not settled yet — never redirect blind
+    if (!group) return; // navigation not settled yet — never redirect blind
 
     const inAuthGroup = group === '(auth)';
-    const inStudentGroup = group === '(student)';
-    const inPartnerGroup = group === '(partner)';
 
     if (!userId) {
-      // Not signed in — redirect to login
+      placedForRef.current = null;
       if (!inAuthGroup) {
         router.replace('/(auth)/login');
       }
       return;
     }
 
-    // Signed in but no role assigned yet → keep/send user to choose-purpose
+    const placementKey = userId + '|' + (role ?? 'none');
+    if (placedForRef.current === placementKey) return; // already placed — hands off
+
+    // Signed in but no role yet → keep/send user to choose-purpose.
+    // Not latched: placement completes only once a role exists.
     if (!role) {
       if (subRoute !== 'choose-purpose') {
         router.replace('/(auth)/choose-purpose');
@@ -58,18 +66,18 @@ function RootNavigation() {
       return;
     }
 
-    // Role-based routing: send to respective group only if not already there
-    if (role === 'customer' && !inStudentGroup) {
-      router.replace('/(student)');
-    } else if (role === 'delivery_partner' && !inPartnerGroup) {
-      router.replace('/(partner)/index' as any);
+    // Place the user in their role's area only if they are not already there.
+    if (role === 'customer') {
+      if (group !== '(student)') router.replace('/(student)');
+    } else if (role === 'delivery_partner') {
+      if (group !== '(partner)') router.replace('/(partner)/index' as any);
     }
+    placedForRef.current = placementKey;
   }, [loading, navReady, userId, role, group, subRoute, router]);
 
   // The Stack is ALWAYS mounted; the loading indicator is an opaque overlay
-  // on top. Previously the Stack was swapped out for a spinner while auth
-  // resolved — unmounting the navigator destroys the navigation state and
-  // bounces the user back to the Explore tab on any auth re-resolution.
+  // on top. Unmounting the navigator while auth resolves destroys the
+  // navigation state and bounces the user back to the start screen.
   return (
     <>
       <StatusBar style="dark" />
