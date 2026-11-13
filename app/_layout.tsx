@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
-import { View, ActivityIndicator } from 'react-native';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
   useFonts,
@@ -21,17 +21,28 @@ function RootNavigation() {
   const { session, profile, loading } = useAuth();
   const router = useRouter();
   const segments = useSegments();
+  const rootNavigationState = useRootNavigationState();
 
-  // Auth guard — redirect based on session + role
+  const userId = session?.user?.id ?? null;
+  const role = profile?.role ?? null;
+  const group = segments[0] as string | undefined;
+  const subRoute = segments[1] as string | undefined;
+  const navReady = !!rootNavigationState?.key;
+
+  // Auth guard — redirect ONLY on a route-group mismatch, and only once the
+  // profile AND the navigation state have fully settled. Depends on primitive
+  // values (userId / role / group), not object identities, so unrelated
+  // auth/profile object churn can never re-fire a redirect mid-navigation.
   useEffect(() => {
-    // Guard must not redirect until profile fetch has resolved
     if (loading) return;
+    if (!navReady) return;
+    if (!group) return; // segments not settled yet — never redirect blind
 
-    const inAuthGroup = segments[0] === '(auth)';
-    const inStudentGroup = segments[0] === '(student)';
-    const inPartnerGroup = segments[0] === '(partner)';
+    const inAuthGroup = group === '(auth)';
+    const inStudentGroup = group === '(student)';
+    const inPartnerGroup = group === '(partner)';
 
-    if (!session) {
+    if (!userId) {
       // Not signed in — redirect to login
       if (!inAuthGroup) {
         router.replace('/(auth)/login');
@@ -40,30 +51,25 @@ function RootNavigation() {
     }
 
     // Signed in but no role assigned yet → keep/send user to choose-purpose
-    if (!profile?.role) {
-      if (segments[1] !== 'choose-purpose') {
+    if (!role) {
+      if (subRoute !== 'choose-purpose') {
         router.replace('/(auth)/choose-purpose');
       }
       return;
     }
 
-    // Role-based routing: send to respective group if not already there
-    if (profile.role === 'customer' && !inStudentGroup) {
+    // Role-based routing: send to respective group only if not already there
+    if (role === 'customer' && !inStudentGroup) {
       router.replace('/(student)');
-    } else if (profile.role === 'delivery_partner' && !inPartnerGroup) {
+    } else if (role === 'delivery_partner' && !inPartnerGroup) {
       router.replace('/(partner)/index' as any);
     }
-  }, [session, profile, loading, segments, router]);
+  }, [loading, navReady, userId, role, group, subRoute, router]);
 
-  // Prevent flash of any screen before auth & profile resolution completes
-  if (loading) {
-    return (
-      <View style={{ flex: 1, backgroundColor: Colors.surface, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
-  }
-
+  // The Stack is ALWAYS mounted; the loading indicator is an opaque overlay
+  // on top. Previously the Stack was swapped out for a spinner while auth
+  // resolved — unmounting the navigator destroys the navigation state and
+  // bounces the user back to the Explore tab on any auth re-resolution.
   return (
     <>
       <StatusBar style="dark" />
@@ -72,6 +78,11 @@ function RootNavigation() {
         <Stack.Screen name="(student)" />
         <Stack.Screen name="(partner)" />
       </Stack>
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+        </View>
+      )}
     </>
   );
 }
@@ -102,3 +113,13 @@ export default function RootLayout() {
     </AuthProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: Colors.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
+});
