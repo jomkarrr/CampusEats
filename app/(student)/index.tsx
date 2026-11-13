@@ -28,6 +28,8 @@ import {
 } from '../../constants/theme';
 
 type OutletRow = Database['public']['Tables']['outlets']['Row'];
+type MenuItemRow = Database['public']['Tables']['menu_items']['Row'];
+type CategoryItem = MenuItemRow & { outlets: { name: string } | null };
 
 const CATEGORIES = [
   { id: 'all', label: 'All', emoji: '🍽️' },
@@ -40,13 +42,15 @@ const CATEGORIES = [
 
 export default function ExploreScreen() {
   const router = useRouter();
-  const { itemCount, subtotal } = useCart();
+  const { itemCount, subtotal, addItem, removeItem, getItemQty } = useCart();
   const [outlets, setOutlets] = useState<OutletRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all');
+  const [categoryItems, setCategoryItems] = useState<CategoryItem[]>([]);
+  const [itemsLoading, setItemsLoading] = useState(false);
 
   const fetchOutlets = async () => {
     try {
@@ -71,10 +75,51 @@ export default function ExploreScreen() {
     fetchOutlets();
   }, []);
 
+  // Category filter: load matching MEALS across all outlets (dish-first view)
+  useEffect(() => {
+    if (activeCategory === 'all') {
+      setCategoryItems([]);
+      return;
+    }
+    const termMap: Record<string, string[]> = {
+      pizza: ['pizza'],
+      biryani: ['biryani'],
+      thali: ['thali'],
+      beverages: ['beverage', 'juice', 'shake', 'drink', 'coffee'],
+      sides: ['side', 'fries', 'starter', 'snack'],
+    };
+    const terms = termMap[activeCategory] ?? [activeCategory];
+    const orFilter = terms
+      .map((term) => `category.ilike.%${term}%,name.ilike.%${term}%`)
+      .join(',');
+    let cancelled = false;
+    (async () => {
+      setItemsLoading(true);
+      const { data, error: err } = await supabase
+        .from('menu_items')
+        .select('*, outlets(name)')
+        .eq('is_available', true)
+        .or(orFilter)
+        .order('name');
+      if (!cancelled) {
+        if (!err && data) setCategoryItems(data as unknown as CategoryItem[]);
+        setItemsLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeCategory]);
+
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchOutlets();
   }, []);
+
+  // Category meals, further narrowed by the search box
+  const visibleCategoryItems = categoryItems.filter((i) =>
+    i.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   // Filtered outlets based on search query
   const filteredOutlets = outlets.filter((o) =>
@@ -211,8 +256,113 @@ export default function ExploreScreen() {
           })}
         </ScrollView>
 
+        {/* Category meals — shown when a category filter is selected */}
+        {activeCategory !== 'all' && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View>
+                <Text style={styles.sectionTitle}>
+                  {CATEGORIES.find((c) => c.id === activeCategory)?.label} meals
+                </Text>
+                <Text style={styles.sectionSub}>From all campus stalls</Text>
+              </View>
+            </View>
+
+            {itemsLoading ? (
+              <View style={styles.centerContainer}>
+                <ActivityIndicator size="large" color={Colors.primary} />
+                <Text style={styles.loadingText}>Loading meals...</Text>
+              </View>
+            ) : visibleCategoryItems.length === 0 ? (
+              <View style={styles.emptyContainer}>
+                <Ionicons name="fast-food-outline" size={48} color={Colors.textTertiary} />
+                <Text style={styles.emptyTitle}>No meals found</Text>
+                <Text style={styles.emptySub}>Try a different category.</Text>
+              </View>
+            ) : (
+              <View style={styles.verticalList}>
+                {visibleCategoryItems.map((item) => {
+                  const qty = getItemQty(item.id);
+                  return (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={[styles.outletCardVertical, Shadows.card]}
+                      activeOpacity={0.85}
+                      onPress={() => router.push(`/(student)/item/${item.id}` as any)}
+                    >
+                      <Image
+                        source={{
+                          uri:
+                            item.image_url ??
+                            'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400',
+                        }}
+                        style={styles.outletImgVert}
+                      />
+                      <View style={styles.outletInfoVert}>
+                        <View style={styles.nameStatusRow}>
+                          <Text style={styles.outletNameVert} numberOfLines={1}>
+                            {item.name}
+                          </Text>
+                          <View
+                            style={[
+                              styles.vegDot,
+                              { borderColor: item.is_veg ? '#16A34A' : '#DC2626' },
+                            ]}
+                          >
+                            <View
+                              style={[
+                                styles.vegDotInner,
+                                { backgroundColor: item.is_veg ? '#16A34A' : '#DC2626' },
+                              ]}
+                            />
+                          </View>
+                        </View>
+                        <Text style={styles.locationVert} numberOfLines={1}>
+                          {item.outlets?.name ?? 'Campus stall'}
+                        </Text>
+                        <View style={styles.mealBottomRow}>
+                          <Text style={styles.mealPrice}>{formatINR(item.price)}</Text>
+                          {qty === 0 ? (
+                            <TouchableOpacity
+                              style={styles.addBtn}
+                              activeOpacity={0.8}
+                              onPress={() =>
+                                addItem(item, item.outlet_id, item.outlets?.name)
+                              }
+                            >
+                              <Text style={styles.addBtnText}>ADD</Text>
+                            </TouchableOpacity>
+                          ) : (
+                            <View style={styles.stepper}>
+                              <TouchableOpacity
+                                style={styles.stepperBtn}
+                                onPress={() => removeItem(item.id)}
+                              >
+                                <Text style={styles.stepperText}>-</Text>
+                              </TouchableOpacity>
+                              <Text style={styles.stepperQty}>{qty}</Text>
+                              <TouchableOpacity
+                                style={styles.stepperBtn}
+                                onPress={() =>
+                                  addItem(item, item.outlet_id, item.outlets?.name)
+                                }
+                              >
+                                <Text style={styles.stepperText}>+</Text>
+                              </TouchableOpacity>
+                            </View>
+                          )}
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
+          </View>
+        )}
+
         {/* Loading state */}
-        {loading && (
+        {loading && activeCategory === 'all' && (
           <View style={styles.centerContainer}>
             <ActivityIndicator size="large" color={Colors.primary} />
             <Text style={styles.loadingText}>Loading campus outlets...</Text>
@@ -220,7 +370,7 @@ export default function ExploreScreen() {
         )}
 
         {/* Error state */}
-        {error && !loading && (
+        {error && !loading && activeCategory === 'all' && (
           <View style={styles.errorContainer}>
             <Ionicons name="alert-circle-outline" size={36} color={Colors.error} />
             <Text style={styles.errorText}>{error}</Text>
@@ -231,7 +381,7 @@ export default function ExploreScreen() {
         )}
 
         {/* Empty state */}
-        {!loading && !error && filteredOutlets.length === 0 && (
+        {!loading && !error && activeCategory === 'all' && filteredOutlets.length === 0 && (
           <View style={styles.emptyContainer}>
             <Ionicons name="restaurant-outline" size={48} color={Colors.textTertiary} />
             <Text style={styles.emptyTitle}>No outlets found</Text>
@@ -242,7 +392,7 @@ export default function ExploreScreen() {
         )}
 
         {/* Food Street Section */}
-        {!loading && foodStreetOutlets.length > 0 && (
+        {!loading && activeCategory === 'all' && foodStreetOutlets.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <View>
@@ -306,7 +456,7 @@ export default function ExploreScreen() {
         )}
 
         {/* External / Additional Vendors Section */}
-        {!loading && (externalOutlets.length > 0 || (foodStreetOutlets.length > 0 && outlets.length > 1)) && (
+        {!loading && activeCategory === 'all' && (externalOutlets.length > 0 || (foodStreetOutlets.length > 0 && outlets.length > 1)) && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <View>
@@ -890,5 +1040,67 @@ const styles = StyleSheet.create({
     fontFamily: FontFamily.bold,
     fontSize: 12,
     color: '#FFFFFF',
+  },
+  vegDot: {
+    width: 14,
+    height: 14,
+    borderWidth: 1.5,
+    borderRadius: 3,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: Spacing.sm,
+  },
+  vegDotInner: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  mealBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: Spacing.sm,
+  },
+  mealPrice: {
+    fontFamily: FontFamily.extraBold,
+    fontSize: 15,
+    color: Colors.text,
+  },
+  addBtn: {
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
+    borderRadius: Radii.md,
+    paddingHorizontal: 18,
+    paddingVertical: 6,
+    backgroundColor: '#FFFFFF',
+  },
+  addBtnText: {
+    fontFamily: FontFamily.extraBold,
+    fontSize: 13,
+    color: Colors.primary,
+  },
+  stepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primary,
+    borderRadius: Radii.md,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+  },
+  stepperBtn: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  stepperText: {
+    fontFamily: FontFamily.extraBold,
+    fontSize: 15,
+    color: '#FFFFFF',
+  },
+  stepperQty: {
+    fontFamily: FontFamily.extraBold,
+    fontSize: 13,
+    color: '#FFFFFF',
+    minWidth: 16,
+    textAlign: 'center',
   },
 });
