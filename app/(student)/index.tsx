@@ -144,7 +144,7 @@ export default function ExploreScreen() {
           <View style={styles.heroContent}>
             <Text style={styles.heroHeadline}>
               Good food,{'\n'}
-              <Text style={styles.heroHighlight}>less waiting.</Text>
+              <Text style={styles.heroHighlight}>zero waiting.</Text>
             </Text>
             <Text style={styles.heroSub}>
               Order from campus stalls & get it delivered fast.
