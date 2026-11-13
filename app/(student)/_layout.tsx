@@ -1,162 +1,22 @@
 import React from 'react';
-import { Tabs } from 'expo-router';
-import { View, Platform, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Colors, FontFamily, Shadows } from '../../constants/theme';
+import { Stack } from 'expo-router';
 
+// Student area = Stack. The 4 main tabs live in the nested (tabs) group;
+// every flow screen (outlet, item, cart, checkout, ...) is a REAL stack
+// screen, so router.push() performs a true stack push. Previously all of
+// these were href:null screens inside the Tabs navigator, and pushes to
+// them silently bounced back to the previous tab in production builds.
 export default function StudentLayout() {
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.textTertiary,
-        tabBarStyle: styles.tabBar,
-        tabBarLabelStyle: styles.tabBarLabel,
-      }}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ focused }) => (
-            <View style={styles.tabIconContainer}>
-              <Ionicons
-                name={focused ? 'compass' : 'compass-outline'}
-                size={22}
-                color={focused ? Colors.primary : Colors.textTertiary}
-              />
-              {focused && <View style={styles.activeDot} />}
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="search"
-        options={{
-          title: 'Search',
-          tabBarIcon: ({ focused }) => (
-            <View style={styles.tabIconContainer}>
-              <Ionicons
-                name={focused ? 'search' : 'search-outline'}
-                size={22}
-                color={focused ? Colors.primary : Colors.textTertiary}
-              />
-              {focused && <View style={styles.activeDot} />}
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="orders"
-        options={{
-          title: 'Orders',
-          tabBarIcon: ({ focused }) => (
-            <View style={styles.tabIconContainer}>
-              <Ionicons
-                name={focused ? 'receipt' : 'receipt-outline'}
-                size={22}
-                color={focused ? Colors.primary : Colors.textTertiary}
-              />
-              {focused && <View style={styles.activeDot} />}
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ focused }) => (
-            <View style={styles.tabIconContainer}>
-              <Ionicons
-                name={focused ? 'person' : 'person-outline'}
-                size={22}
-                color={focused ? Colors.primary : Colors.textTertiary}
-              />
-              {focused && <View style={styles.activeDot} />}
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="outlet/[id]"
-        options={{
-          href: null,
-          tabBarStyle: { display: 'none' },
-        }}
-      />
-      <Tabs.Screen
-        name="cart"
-        options={{
-          href: null,
-          tabBarStyle: { display: 'none' },
-        }}
-      />
-      <Tabs.Screen
-        name="checkout"
-        options={{
-          href: null,
-          tabBarStyle: { display: 'none' },
-        }}
-      />
-      <Tabs.Screen
-        name="order-confirmed"
-        options={{
-          href: null,
-          tabBarStyle: { display: 'none' },
-        }}
-      />
-      <Tabs.Screen
-        name="orders/[id]"
-        options={{
-          href: null,
-          tabBarStyle: { display: 'none' },
-        }}
-      />
-      <Tabs.Screen
-        name="item/[id]"
-        options={{
-          href: null,
-          tabBarStyle: { display: 'none' },
-        }}
-      />
-      <Tabs.Screen
-        name="outlet-orders"
-        options={{
-          href: null,
-          tabBarStyle: { display: 'none' },
-        }}
-      />
-    </Tabs>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="outlet/[id]" />
+      <Stack.Screen name="item/[id]" />
+      <Stack.Screen name="cart" />
+      <Stack.Screen name="checkout" />
+      <Stack.Screen name="order-confirmed" />
+      <Stack.Screen name="orders/[id]" />
+      <Stack.Screen name="outlet-orders" />
+    </Stack>
   );
 }
-
-const styles = StyleSheet.create({
-  tabBar: {
-    backgroundColor: '#FFFFFF',
-    borderTopColor: Colors.border,
-    borderTopWidth: 1,
-    height: Platform.OS === 'ios' ? 84 : 64,
-    paddingTop: 8,
-    paddingBottom: Platform.OS === 'ios' ? 24 : 8,
-    ...Shadows.card,
-  },
-  tabBarLabel: {
-    fontFamily: FontFamily.semiBold,
-    fontSize: 10,
-    marginTop: 2,
-  },
-  tabIconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    height: 28,
-  },
-  activeDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.primary,
-    marginTop: 2,
-  },
-});
